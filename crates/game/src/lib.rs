@@ -1,22 +1,27 @@
 #[derive(Debug, PartialEq)]
-enum InputResult {
+pub enum InputResult {
     Dry,
     Error,
     Success,
 }
 
-struct Game {
-    bg_text: String,
-    typed_text: String,
+pub struct Game {
+    pub bg_text: String,
+    pub typed_text: String,
 }
 
 impl Game {
-    fn input(&mut self, typed_letter: char) -> InputResult {
+    pub fn input(&mut self, typed_letter: char) -> InputResult {
         if typed_letter == '\u{8}' {
             if self.typed_text.is_empty() {
                 return InputResult::Dry;
             }
             self.typed_text.pop();
+        } else if typed_letter == ' ' {
+            for _ in self.typed_text.len()..self.get_next_word_position() {
+                self.typed_text.push(' ');
+            }
+            return InputResult::Success;
         } else {
             self.typed_text.push(typed_letter);
         }
@@ -27,6 +32,10 @@ impl Game {
         }
 
         InputResult::Success
+    }
+
+    pub fn show(&self) {
+        println!("game shows: {}", self.typed_text)
     }
 
     fn get_next_word_position(&mut self) -> usize {
@@ -103,6 +112,38 @@ mod tests {
         // assert
         assert_eq!(game.typed_text, String::from(""));
         assert_eq!(result, InputResult::Dry);
+    }
+
+    #[test]
+    fn inserts_spaces_until_next_word_on_space_stroke() {
+        // arrange
+        let mut game = Game {
+            bg_text: String::from("bonjour tout"),
+            typed_text: String::from("b"),
+        };
+
+        // act
+        let result = game.input(' ');
+
+        // assert
+        assert_eq!(game.typed_text, String::from("b       "));
+        assert_eq!(result, InputResult::Success)
+    }
+
+    #[test]
+    fn being_on_the_second_word_when_the_space_is_type_it_jumps_to_the_third_word() {
+        // arrange
+        let mut game = Game {
+            bg_text: String::from("bonjour tout le monde"),
+            typed_text: String::from("bonjour to"),
+        };
+
+        // act
+        let result = game.input(' ');
+
+        // assert
+        assert_eq!(game.typed_text, String::from("bonjour to   "));
+        assert_eq!(result, InputResult::Success)
     }
 
     #[test]
