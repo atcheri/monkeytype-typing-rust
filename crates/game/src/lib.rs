@@ -27,14 +27,7 @@ impl Game {
             return self.handle_action(Action::EmptyString);
         }
 
-        self.handle_action(Action::Insert(typed_letter));
-
-        let expected_letter = self.bg_text.chars().nth(self.typed_text.len() - 1).unwrap();
-        if typed_letter != expected_letter {
-            return InputResult::Error;
-        }
-
-        InputResult::Success
+        return self.handle_action(Action::Insert(typed_letter));
     }
 
     pub fn show(&self) {
@@ -58,7 +51,12 @@ impl Game {
             }
             Action::Insert(c) => {
                 self.typed_text.push(c);
-                return InputResult::Success;
+                let expected_letter = self.bg_text.chars().nth(self.typed_text.len() - 1).unwrap();
+                if c != expected_letter {
+                    return InputResult::Error;
+                }
+
+                InputResult::Success
             }
         }
     }
