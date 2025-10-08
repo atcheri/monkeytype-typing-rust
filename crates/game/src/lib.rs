@@ -1,7 +1,16 @@
 #[derive(Debug, PartialEq)]
+
+enum Action {
+    Remove,
+    EmptyString,
+    Insert(char),
+}
+
+#[derive(Debug, PartialEq)]
 pub enum InputResult {
     Dry,
     Error,
+    Remove,
     Success,
 }
 
@@ -13,18 +22,12 @@ pub struct Game {
 impl Game {
     pub fn input(&mut self, typed_letter: char) -> InputResult {
         if typed_letter == '\u{8}' {
-            if self.typed_text.is_empty() {
-                return InputResult::Dry;
-            }
-            self.typed_text.pop();
+            return self.handle_action(Action::Remove);
         } else if typed_letter == ' ' {
-            for _ in self.typed_text.len()..self.get_next_word_position() {
-                self.typed_text.push(' ');
-            }
-            return InputResult::Success;
-        } else {
-            self.typed_text.push(typed_letter);
+            return self.handle_action(Action::EmptyString);
         }
+
+        self.handle_action(Action::Insert(typed_letter));
 
         let expected_letter = self.bg_text.chars().nth(self.typed_text.len() - 1).unwrap();
         if typed_letter != expected_letter {
@@ -36,6 +39,28 @@ impl Game {
 
     pub fn show(&self) {
         println!("game shows: {}", self.typed_text)
+    }
+
+    fn handle_action(&mut self, action: Action) -> InputResult {
+        match action {
+            Action::Remove => {
+                if self.typed_text.is_empty() {
+                    return InputResult::Dry;
+                }
+                self.typed_text.pop();
+                return InputResult::Remove;
+            }
+            Action::EmptyString => {
+                for _ in self.typed_text.len()..self.get_next_word_position() {
+                    self.typed_text.push(' ');
+                }
+                return InputResult::Success;
+            }
+            Action::Insert(c) => {
+                self.typed_text.push(c);
+                return InputResult::Success;
+            }
+        }
     }
 
     fn get_next_word_position(&mut self) -> usize {
@@ -95,7 +120,7 @@ mod tests {
 
         // assert
         assert_eq!(game.typed_text, String::from("bo"));
-        assert_eq!(result, InputResult::Error)
+        assert_eq!(result, InputResult::Remove)
     }
 
     #[test]
